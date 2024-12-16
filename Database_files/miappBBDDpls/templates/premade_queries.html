@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Premade Queries{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Premade Queries</h1>
+
+    <!-- Search Form -->
+    <form method="get" action="{% url 'premade_queries' %}" class="form-inline mb-4">
+        <input type="text" name="search" class="form-control mr-2" placeholder="Search queries..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <!-- List of Premade Queries -->
+    <ul class="list-group">
+        {% for query in queries %}
+            <li class="list-group-item">
+                <h5>{{ query.natural_language_query }}</h5>
+                <form method="post" action="{% url 'execute_query' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="json_query" value="{{ query.json_query }}">
+                    <input type="hidden" name="natural_language_query" value="{{ query.natural_language_query }}">
+                    <input type="hidden" name="target_collection" value="{{ query.target_collection }}"> <!-- Hidden field -->
+                    <button type="submit" class="btn btn-success">Execute</button>
+                </form>
+            </li>
+        {% empty %}
+            <li class="list-group-item">No premade queries found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+

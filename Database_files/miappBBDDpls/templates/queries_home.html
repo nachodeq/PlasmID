@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Queries Home{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Queries Home</h1>
+    </header>
+    <main>
+        <!-- Brief description -->
+        <p>
+            Welcome to the Queries Home page. 
+        </p>
+
+        <h2>How to Make Queries</h2>
+        <p>You can make queries in three ways:</p>
+        <ul>
+            <li><strong><a href="{% url 'premade_queries' %}">Premade Queries</a></strong> - Use queries created by other users.</li>
+            <li><strong><a href="{% url 'new_query' %}">New Query</a></strong> - Create and run your own custom queries.</li>
+            <!-- New link added -->
+            <li><strong><a href="{% url 'natural_language_query' %}">Natural Language Query</a></strong> - Generate queries by entering text in natural language.</li>
+        </ul>
+    </main>
+    <footer>
+        <p><a href="{% url 'home' %}">Back to Home</a></p>
+    </footer>
+{% endblock %}
+

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Plasmid Integrative Database{% endblock %}
+
+{% block content %}
+    <h2>Welcome to the Plasmid Integrative Database</h2>
+    <p>
+        The Plasmid Integrative Database is a comprehensive resource designed to facilitate research and understanding of plasmids across various environments and host organisms. Our project aims to integrate detailed information on plasmids, their host bacteria, and associated genes to support scientific discoveries in microbiology, genetics, and biotechnology.
+    </p>
+
+    <h3>Explore Our Database:</h3>
+    <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+        <!-- Left Column: Environments and Plasmids -->
+        <div style="flex: 1; min-width: 300px;">
+            <!-- Environments Section -->
+            <h3>• Environments</h3>
+            <p>7 unique environments:</p>
+            <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>Other</li>
+                <li>Animal Host</li>
+                <li>Soil</li>
+                <li>Water</li>
+                <li>Plant</li>
+                <li>Industrial/Lab</li>
+                <li>Unknown</li>
+            </ul>
+
+            <!-- Plasmids Section -->
+            <h3>• Plasmids</h3>
+            <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>Accession Number</li>
+                <li>Sequence</li>
+                <li>Length</li>
+                <li>Mobility</li>
+                <li>Replicon Type</li>
+                <li>Assembly Accession</li>
+            </ul>
+        </div>
+
+        <!-- Right Column: Hosts and Genes -->
+        <div style="flex: 1; min-width: 300px;">
+            <!-- Hosts Section -->
+            <h3>• Hosts</h3>
+            <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>Family</li>
+                <li>Genus</li>
+                <li>Species</li>
+            </ul>
+
+            <!-- Genes Section -->
+            <h3>• Genes</h3>
+            <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>Locus</li>
+                <li>Gene ID</li>
+                <li>Gene Name</li>
+                <li>Product</li>
+                <li>Start Position</li>
+                <li>Stop Position</li>
+                <li>Strand</li>
+                <li>Nucleotide Sequence</li>
+                <li>Amino Acid Sequence</li>
+                <li>Antibiotic Resistance (Yes/No)</li>
+                <li>Resistance Info (if applicable)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="{% url 'queries_home' %}" class="btn">Get Started with Queries</a>
+    </div>
+{% endblock %}
+

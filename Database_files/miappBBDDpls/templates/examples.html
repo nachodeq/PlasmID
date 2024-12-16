@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Query Examples{% endblock %}
+
+{% block content %}
+<header>
+    <h1 style="text-align: center;">Query Examples</h1>
+</header>
+<main>
+    <p style="text-align: center;">Below are some sample queries to help you understand how to formulate your own queries.</p>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+        {% for example in sample_queries %}
+            <div style="border: 1px solid #dee2e6; padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #f8f9fa;">
+                <h3>{{ example.natural_language }}</h3>
+                <p><strong>Difficulty:</strong> 
+                    <span style="font-weight: bold; 
+                        {% if example.difficulty <= 30 %}
+                            color: #28a745; /* Green for Easy */
+                        {% elif example.difficulty <= 70 %}
+                            color: #ffc107; /* Yellow for Medium */
+                        {% else %}
+                            color: #dc3545; /* Red for Hard */
+                        {% endif %}
+                    ">
+                        {% if example.difficulty <= 30 %}
+                            Easy
+                        {% elif example.difficulty <= 70 %}
+                            Medium
+                        {% else %}
+                            Hard
+                        {% endif %}
+                    </span>
+                </p>
+                <p><strong>Target Collection:</strong> {{ example.collection }}</p>
+                <p><strong>JSON Query:</strong></p>
+                <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px; overflow-x: auto; max-width: 100%;">
+                    <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">{{ example.json_query }}</pre>
+                </div>
+                <!-- Add Button for Using the Query -->
+                <form method="post" action="{% url 'new_query' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="natural_language_query" value="{{ example.natural_language }}">
+                    <input type="hidden" name="json_query" value="{{ example.json_query }}">
+                    <input type="hidden" name="target_collection" value="{{ example.collection }}">
+                    <button type="submit" class="btn">Use this Query</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p style="text-align: center;"><a href="{% url 'new_query' %}" style="color: #007bff; text-decoration: none;">Back to New Query</a></p>
+</main>
+{% endblock %}
+
+<style>
+    /* General Page Styling */
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    main {
+        padding: 20px;
+    }
+
+    header h1 {
+        font-size: 2rem;
+        margin: 20px 0;
+        color: #333;
+    }
+
+    p {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    a {
+        text-decoration: none;
+        color: #007bff;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    /* Card Styling for Query Examples */
+    .query-card {
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
+
+    .query-card h3 {
+        margin: 0;
+        color: #333;
+        font-size: 1.25rem;
+    }
+
+    .query-card pre {
+        margin: 0;
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto; /* Enables horizontal scrolling for long JSON queries */
+        white-space: pre-wrap; /* Wraps long lines */
+        word-wrap: break-word; /* Ensures words break when necessary */
+        font-family: monospace;
+    }
+
+    /* Form Button */
+    .btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        pre {
+            font-size: 0.9rem;
+        }
+
+        .query-card {
+            padding: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+

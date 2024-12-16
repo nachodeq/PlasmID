@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-center">Natural Language Query</h1>
+
+<!-- Include the desired text -->
+<p class="text-center">
+    This is the query wizard. You can input text and it will generate the corresponding query to the database. Be careful! This doesn't always work or produce exact results. If you are asking important questions, please revise the queries manually!
+</p>
+
+{% if error %}
+    <div class="alert alert-danger text-center">{{ error }}</div>
+{% endif %}
+
+<!-- Center the form -->
+<div class="container d-flex justify-content-center">
+    <form method="post" class="w-50">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="natural_language_query">Enter your query in natural (everyday) language:</label>
+            <textarea id="natural_language_query" name="natural_language_query" class="form-control" rows="3">{{ natural_language_query }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Query</button>
+    </form>
+</div>
+
+{% if json_query %}
+    <h2 class="text-center">Generated JSON Query</h2>
+    <pre>{{ json_query }}</pre>
+    <h3 class="text-center">Target Collection: {{ target_collection }}</h3>
+
+    <!-- Form to execute the query -->
+    <div class="container d-flex justify-content-center">
+        <form method="post" action="{% url 'execute_query' %}" class="w-50">
+            {% csrf_token %}
+            <input type="hidden" name="json_query" value="{{ json_query }}">
+            <input type="hidden" name="natural_language_query" value="{{ natural_language_query }}">
+            <input type="hidden" name="target_collection" value="{{ target_collection }}">
+            <button type="submit" class="btn btn-success">Execute Query</button>
+        </form>
+    </div>
+{% endif %}
+
+{% if raw_response %}
+    <h2 class="text-center">Raw LLM Response</h2>
+    <pre>{{ raw_response }}</pre>
+{% endif %}
+
+{% endblock %}
+

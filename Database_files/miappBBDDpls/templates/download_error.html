@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Download Error - Plasmid Integrative Database{% endblock %}
+
+{% block content %}
+    <h2>Download Error</h2>
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    <div class="text-center mt-3">
+        <a href="{% url 'query_results' %}" class="btn btn-secondary">Back to Results</a>
+    </div>
+{% endblock %}
+

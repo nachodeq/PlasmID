@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Database Schema{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">📊 Database Schema</h1>
+    <p>{{ explanatory_text }}</p>
+    
+    <h2 class="mt-4">Schema Overview</h2>
+    <pre>{{ schema | pprint }}</pre>
+    
+    <h2 class="mt-4">Schema Details</h2>
+    <div class="accordion" id="schemaAccordion">
+        {% for collection, fields in schema.items %}
+            <div class="card">
+                <div class="card-header" id="heading{{ forloop.counter }}">
+                    <h3 class="mb-0">
+                        <a href="#" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                            {{ collection|title }}
+                        </a>
+                    </h3>
+                </div>
+
+                <div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-parent="#schemaAccordion">
+                    <div class="card-body">
+                        <ul>
+                            {% for field, type_desc in fields.items %}
+                                <li><strong>{{ field }}</strong>: {{ type_desc }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center mt-5">
+        <a href="{% url 'home' %}" class="btn btn-primary mr-2">Back to Home</a>
+        <a href="{% url 'queries_home' %}" class="btn btn-secondary">Back to Queries</a>
+    </div>
+</div>
+{% endblock %}
+

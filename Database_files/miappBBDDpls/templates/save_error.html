@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Error Saving Query{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-danger text-center" role="alert">
+        <h2>❌ Error Saving Query</h2>
+        <p>{{ error }}</p>
+    </div>
+    <div class="text-center">
+        <a href="{% url 'save_queries' %}" class="btn btn-primary mr-2">Try Again</a>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+    </div>
+</div>
+{% endblock %}
+

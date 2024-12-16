@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Create a New Query{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Create a New Query</h1>
+</header>
+<main>
+    {% if error %}
+        <p class="error" style="color: red; font-weight: bold;">{{ error }}</p>
+    {% endif %}
+    <form method="post" style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9;">
+        {% csrf_token %}
+        <div style="margin-bottom: 20px;">
+            <label for="target_collection" style="font-weight: bold; display: block; margin-bottom: 5px;">Target Collection (environments, hosts, plasmids or genes):</label>
+            <input 
+                type="text" 
+                id="target_collection" 
+                name="target_collection" 
+                placeholder="e.g., plasmids"
+                value="{{ target_collection|default:'' }}"
+                style="width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;"
+            >
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="natural_language_query" style="font-weight: bold; display: block; margin-bottom: 5px;">Natural Language Query (What are you asking?):</label>
+            <textarea 
+                id="natural_language_query" 
+                name="natural_language_query" 
+                rows="2" 
+                required 
+                style="width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;"
+            >{{ natural_language_query|default:'' }}</textarea>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="json_query" style="font-weight: bold; display: block; margin-bottom: 5px;">JSON Query:</label>
+            <textarea 
+                id="json_query" 
+                name="json_query" 
+                rows="5" 
+                required 
+                style="width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;"
+            >{{ json_query|default:'' }}</textarea>
+        </div>
+
+        <div style="text-align: center;">
+            <button 
+                type="submit" 
+                style="background-color: #007bff; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer;"
+            >
+                Execute Query
+            </button>
+        </div>
+    </form>
+
+    <!-- Link to Examples Page -->
+    <div style="text-align: center; margin-top: 20px;">
+        <p>Any doubts? <a href="{% url 'examples' %}">Look at our Examples!</a></p>
+    </div>
+</main>
+<footer>
+    <p style="text-align: center; margin-top: 20px;"><a href="{% url 'queries_home' %}" style="color: #007bff; text-decoration: none;">Back to Queries Home</a></p>
+</footer>
+{% endblock %}
+

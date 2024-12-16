@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Query Saved Successfully{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-success text-center" role="alert">
+        <h2>🎉 Query Saved Successfully!</h2>
+        <p>Thank you for your contribution.</p>
+    </div>
+    <div class="text-center">
+        <a href="{% url 'home' %}" class="btn btn-primary mr-2">Back to Home</a>
+        <a href="{% url 'premade_queries' %}" class="btn btn-secondary">View All Queries</a>
+    </div>
+</div>
+{% endblock %}
+
