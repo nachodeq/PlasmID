@@ -1,0 +1,801 @@
+[
+    {
+        "input": "Find the 10 most common plasmids associated with Escherichia coli.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$match": {
+                        "host.genus": "Escherichia",
+                        "host.species": "Escherichia coli"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence": {
+                            "$substr": [
+                                "$sequence",
+                                0,
+                                50
+                            ]
+                        },
+                        "sequence_length": 1,
+                        "mobility": 1,
+                        "replicon_type": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "List genes that confer antibiotic resistance.",
+        "output": {
+            "collection": "genes",
+            "pipeline": {
+                "antibiotic_resistance": true
+            }
+        }
+    },
+    {
+        "input": "Show plasmids found in water environments.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$match": {
+                        "environment.name": "Water"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence_length": 1,
+                        "mobility": 1,
+                        "replicon_type": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "List genes on plasmids from hosts in plant environments that are antibiotic-resistant.",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$match": {
+                        "antibiotic_resistance": true
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "plasmids",
+                        "localField": "plasmid_id",
+                        "foreignField": "_id",
+                        "as": "plasmid"
+                    }
+                },
+                {
+                    "$unwind": "$plasmid"
+                },
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "plasmid.host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "host.environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$match": {
+                        "environment.name": "Plant"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "gene_name": 1,
+                        "product": {
+                            "$substr": [
+                                "$product",
+                                0,
+                                50
+                            ]
+                        },
+                        "plasmid_id": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Which hosts carry plasmids with the 'IncFII' replicon type?",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$match": {
+                        "replicon_type": {
+                            "$regex": "IncQ",
+                            "$options": "i"
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$group": {
+                        "_id": "$host._id",
+                        "genus": {
+                            "$first": "$host.genus"
+                        },
+                        "species": {
+                            "$first": "$host.species"
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "genus": 1,
+                        "species": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "List all antibiotic resistance genes on plasmids longer than 15,000 base pairs.",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "plasmids",
+                        "localField": "plasmid_id",
+                        "foreignField": "_id",
+                        "as": "plasmid"
+                    }
+                },
+                {
+                    "$unwind": "$plasmid"
+                },
+                {
+                    "$match": {
+                        "plasmid.sequence_length": {
+                            "$gt": 15000
+                        },
+                        "antibiotic_resistance": true
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "gene_name": 1,
+                        "product": {
+                            "$substr": [
+                                "$product",
+                                0,
+                                50
+                            ]
+                        },
+                        "plasmid_id": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Find plasmids from hosts in animal environments that carry genes encoding beta-lactamase.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$match": {
+                        "product": {
+                            "$regex": "beta-lactamase",
+                            "$options": "i"
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "plasmids",
+                        "localField": "plasmid_id",
+                        "foreignField": "_id",
+                        "as": "plasmid"
+                    }
+                },
+                {
+                    "$unwind": "$plasmid"
+                },
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "plasmid.host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "host.environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$match": {
+                        "environment.name": "Animal Host"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": "$plasmid._id",
+                        "plasmid_id_str": "$plasmid.plasmid_id",
+                        "product": {
+                            "$substr": [
+                                "$product",
+                                0,
+                                50
+                            ]
+                        },
+                        "host_genus": "$host.genus",
+                        "host_species": "$host.species"
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Identify genes with identity score greater than 90% for antibiotic resistance.",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$match": {
+                        "antibiotic_resistance": true,
+                        "resistance_info.identity": {
+                            "$gt": 90
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "gene_name": 1,
+                        "resistance_info.identity": 1,
+                        "resistance_info.resistance_to": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "List hosts with plasmids that have a specific replicon type (e.g., IncP).",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$match": {
+                        "replicon_type": { "$regex": "IncP", "$options": "i" }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "host.genus": 1,
+                        "host.species": 1,
+                        "plasmid_id": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Find the top 10 plasmids with the longest sequences.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$sort": {
+                        "sequence_length": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence_length": 1,
+                        "mobility": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Identify the hosts with the highest number of plasmids containing antibiotic resistance genes.",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$match": {
+                        "antibiotic_resistance": true
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "plasmids",
+                        "localField": "plasmid_id",
+                        "foreignField": "_id",
+                        "as": "plasmid"
+                    }
+                },
+                {
+                    "$unwind": "$plasmid"
+                },
+                {
+                    "$lookup": {
+                        "from": "hosts",
+                        "localField": "plasmid.host_id",
+                        "foreignField": "_id",
+                        "as": "host"
+                    }
+                },
+                {
+                    "$unwind": "$host"
+                },
+                {
+                    "$group": {
+                        "_id": {
+                            "genus": "$host.genus",
+                            "species": "$host.species"
+                        },
+                        "plasmid_count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$sort": {
+                        "plasmid_count": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "host_genus": "$_id.genus",
+                        "host_species": "$_id.species",
+                        "plasmid_count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Find all plasmids with a specific sequence length range (e.g., 20,000 to 50,000 base pairs).",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$match": {
+                        "sequence_length": {
+                            "$gte": 20000,
+                            "$lte": 50000
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence_length": 1,
+                        "replicon_type": 1,
+                        "mobility": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "List environments with plasmids that do not confer any antibiotic resistance.",
+        "output": {
+            "collection": "environments",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "genes",
+                        "localField": "_id",
+                        "foreignField": "plasmid_id",
+                        "as": "genes"
+                    }
+                },
+                {
+                    "$match": {
+                        "genes.antibiotic_resistance": {
+                            "$exists": false
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$group": {
+                        "_id": "$environment.name",
+                        "plasmid_count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$sort": {
+                        "plasmid_count": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "environment_name": "$_id",
+                        "plasmid_count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Show me the largest plasmids in terms of base pairs.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$sort": {
+                        "sequence_length": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence_length": 1,
+                        "mobility": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Show plasmids that have more than five different types of antibiotic resistance.",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$match": {
+                        "antibiotic_resistance": true
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$plasmid_id",
+                        "unique_resistances": {
+                            "$addToSet": "$resistance_info.resistance_to"
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "resistance_count": {
+                            "$size": "$unique_resistances"
+                        }
+                    }
+                },
+                {
+                    "$match": {
+                        "resistance_count": {
+                            "$gt": 5
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "plasmids",
+                        "localField": "_id",
+                        "foreignField": "_id",
+                        "as": "plasmid"
+                    }
+                },
+                {
+                    "$unwind": "$plasmid"
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": "$plasmid.plasmid_id",
+                        "resistance_count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "What are the most frequent genes across all plasmids?",
+        "output": {
+            "collection": "genes",
+            "pipeline": [
+                {
+                    "$group": {
+                        "_id": "$gene_name",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$sort": {
+                        "count": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "gene_name": "$_id",
+                        "count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Show me plasmids between 20k and 50k base pairs in length.",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$match": {
+                        "sequence_length": {
+                            "$gte": 20000,
+                            "$lte": 50000
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "plasmid_id": 1,
+                        "sequence_length": 1,
+                        "replicon_type": 1,
+                        "mobility": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "Which environments have plasmids with no antibiotic resistance?",
+        "output": {
+            "collection": "environments",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "genes",
+                        "localField": "_id",
+                        "foreignField": "plasmid_id",
+                        "as": "genes"
+                    }
+                },
+                {
+                    "$match": {
+                        "genes.antibiotic_resistance": {
+                            "$exists": false
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$group": {
+                        "_id": "$environment.name",
+                        "plasmid_count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$sort": {
+                        "plasmid_count": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "environment_name": "$_id",
+                        "plasmid_count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    },
+    {
+        "input": "What are the most common replicon types in water environments?",
+        "output": {
+            "collection": "plasmids",
+            "pipeline": [
+                {
+                    "$lookup": {
+                        "from": "environments",
+                        "localField": "environment_id",
+                        "foreignField": "_id",
+                        "as": "environment"
+                    }
+                },
+                {
+                    "$unwind": "$environment"
+                },
+                {
+                    "$match": {
+                        "environment.name": "Water"
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$replicon_type",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$sort": {
+                        "count": -1
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "replicon_type": "$_id",
+                        "count": 1
+                    }
+                },
+                {
+                    "$limit": 10
+                }
+            ]
+        }
+    }
+]
