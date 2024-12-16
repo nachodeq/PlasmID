@@ -6,6 +6,7 @@ import json
 import logging
 import csv
 
+# Categories for environment classification based on isolation sources
 ENVIRONMENT_CATEGORIES = {
     "Water": ["water", "marine", "river", "lake", "seawater", "ocean"],
     "Soil": ["soil", "ground", "earth", "compost", "sediment"],
@@ -15,18 +16,26 @@ ENVIRONMENT_CATEGORIES = {
     "Unknown": ["unknown", "n/a", "none", "not available"]
 }
 
-# Setup logging
+# Setup logging for debugging and tracking execution
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Parsing Functions
 def parse_fasta(fasta_folder):
+    """
+    Parse FASTA files in a folder and extract plasmid sequences.
+    Args:
+        fasta_folder (str): Path to the folder containing FASTA files.
+    Returns:
+        dict: A dictionary with plasmid IDs as keys and sequences as values.
+    """
     plasmid_sequences = {}
     for filename in os.listdir(fasta_folder):
-        if filename.endswith('.fasta') or filename.endswith('.fa') or filename.endswith('.fna'):
+        if filename.endswith(('.fasta', '.fa', '.fna')):  # Match common FASTA extensions
             filepath = os.path.join(fasta_folder, filename)
             try:
+                # Parse each FASTA file and extract sequences
                 for record in SeqIO.parse(filepath, 'fasta'):
-                    plasmid_id = os.path.splitext(filename)[0]
+                    plasmid_id = os.path.splitext(filename)[0]  # Use filename as plasmid ID
                     plasmid_sequences[plasmid_id] = str(record.seq)
             except Exception as e:
                 logging.error(f"Error processing {filename}: {e}")
@@ -34,16 +43,24 @@ def parse_fasta(fasta_folder):
     return plasmid_sequences
 
 def parse_bakta(bakta_folder):
+    """
+    Parse Bakta annotation JSON files to extract gene data.
+    Args:
+        bakta_folder (str): Path to folder containing Bakta results.
+    Returns:
+        dict: A dictionary with plasmid IDs as keys and gene lists as values.
+    """
     plasmid_genes = {}
     for folder_name in os.listdir(bakta_folder):
         folder_path = os.path.join(bakta_folder, folder_name)
-        if os.path.isdir(folder_path):
-            plasmid_id = folder_name.replace('_baktaresult', '')
+        if os.path.isdir(folder_path):  # Ensure it is a folder
+            plasmid_id = folder_name.replace('_baktaresult', '')  # Extract plasmid ID
             json_file = os.path.join(folder_path, f"{plasmid_id}.json")
             if os.path.exists(json_file):
                 try:
                     with open(json_file, 'r') as f:
                         data = json.load(f)
+                        # Extract CDS features from JSON
                         genes = [
                             {
                                 'locus': feature.get('locus', ''),
@@ -59,7 +76,7 @@ def parse_bakta(bakta_folder):
                                 'aa_sequence': feature.get('aa', ''),
                             }
                             for feature in data.get('features', [])
-                            if feature.get('type', '').lower() == 'cds'
+                            if feature.get('type', '').lower() == 'cds'  # Filter CDS features
                         ]
                         plasmid_genes[plasmid_id] = genes
                 except json.JSONDecodeError:
@@ -68,14 +85,21 @@ def parse_bakta(bakta_folder):
     return plasmid_genes
 
 def parse_mobtyper(mobtyper_folder):
+    """
+    Parse MobTyper results and extract mobility and replicon types.
+    Args:
+        mobtyper_folder (str): Path to folder containing MobTyper files.
+    Returns:
+        dict: A dictionary with plasmid IDs as keys and mobility data as values.
+    """
     plasmid_mobility = {}
     for filename in os.listdir(mobtyper_folder):
-        if filename.endswith('_mobtyper.fasta'):
+        if filename.endswith('_mobtyper.fasta'):  # Filter files by suffix
             filepath = os.path.join(mobtyper_folder, filename)
             plasmid_id = filename.replace('_mobtyper.fasta', '')
             try:
                 with open(filepath, 'r') as f:
-                    reader = csv.DictReader(f, delimiter='\t')
+                    reader = csv.DictReader(f, delimiter='\t')  # Tab-delimited file
                     for row in reader:
                         plasmid_mobility[plasmid_id] = {
                             'mobility': row.get('predicted_mobility', '').strip(),
@@ -87,9 +111,16 @@ def parse_mobtyper(mobtyper_folder):
     return plasmid_mobility
 
 def parse_plsdb_metadata(metadata_file):
+    """
+    Parse metadata from PLSDB and categorize environments.
+    Args:
+        metadata_file (str): Path to metadata file (TSV format).
+    Returns:
+        DataFrame: Pandas DataFrame with categorized metadata.
+    """
     metadata_df = pd.read_csv(metadata_file, sep='\t')
     
-    # Check for required columns
+    # Ensure all required columns are present
     required_columns = [
         'NUCCORE_ACC',
         'BIOSAMPLE_IsolationSource',
@@ -102,27 +133,28 @@ def parse_plsdb_metadata(metadata_file):
     missing_columns = [col for col in required_columns if col not in metadata_df.columns]
     if missing_columns:
         logging.error(f"The metadata file is missing required columns: {', '.join(missing_columns)}")
-        # Continue processing but be aware that some data may be missing
-        # You can choose to return None or handle this as per your requirement
 
-    # Lowercase the 'BIOSAMPLE_IsolationSource' for categorization
+    # Categorize environments based on isolation source
     metadata_df['IsolationSource_lower'] = metadata_df['BIOSAMPLE_IsolationSource'].astype(str).str.lower()
-    
-    # Categorize environments
     def categorize(isolation_source):
         for category, keywords in ENVIRONMENT_CATEGORIES.items():
             if any(keyword in isolation_source for keyword in keywords):
                 return category
         return "Other"
-    
     metadata_df['Categorized_Environment'] = metadata_df['IsolationSource_lower'].apply(categorize)
     metadata_df.drop(columns=['IsolationSource_lower'], inplace=True)
-    
-    # Log the columns present
+
     logging.info(f"Columns in metadata_df: {metadata_df.columns.tolist()}")
     return metadata_df
 
 def parse_resfinder_tab(resfinder_tab_file):
+    """
+    Parse ResFinder output and extract resistance genes.
+    Args:
+        resfinder_tab_file (str): Path to ResFinder tabular file.
+    Returns:
+        dict: A dictionary with resistance genes and associated metadata.
+    """
     resistance_genes = {}
     try:
         resfinder_data = pd.read_csv(resfinder_tab_file, sep='\t')
@@ -156,6 +188,14 @@ def parse_resfinder_tab(resfinder_tab_file):
     return resistance_genes
 
 def integrate_resistance_data(plasmid_genes, resistance_genes):
+    """
+    Integrate resistance data into plasmid gene annotations.
+    Args:
+        plasmid_genes (dict): Plasmid gene data.
+        resistance_genes (dict): Resistance gene data.
+    Returns:
+        dict: Updated plasmid gene data with resistance information.
+    """
     integrated_count = 0
     unmatched_genes = 0
 
@@ -176,8 +216,17 @@ def integrate_resistance_data(plasmid_genes, resistance_genes):
 
     return plasmid_genes
 
-# Insert environments
+# Insert Functions
+
 def insert_environments(metadata_df, db):
+    """
+    Insert environment categories into the database.
+    Args:
+        metadata_df (DataFrame): Metadata DataFrame.
+        db: MongoDB database instance.
+    Returns:
+        dict: Mapping of environment names to MongoDB IDs.
+    """
     environment_id_map = {}
     unique_environments = metadata_df['Categorized_Environment'].unique()
     environment_data_list = [{'name': env} for env in unique_environments]
@@ -194,15 +243,24 @@ def insert_environments(metadata_df, db):
     return environment_id_map
 
 def insert_hosts(metadata_df, environment_id_map, db):
+    """
+    Insert hosts and their environment mappings into the database.
+    Args:
+        metadata_df (DataFrame): Metadata DataFrame.
+        environment_id_map (dict): Mapping of environment names to MongoDB IDs.
+        db: MongoDB database instance.
+    Returns:
+        dict: Mapping of host names to MongoDB IDs.
+    """
     host_id_map = {}
     host_data_list = []
     host_name_list = []
 
     if 'TAXONOMY_genus' not in metadata_df.columns or 'TAXONOMY_species' not in metadata_df.columns:
-        logging.error("El archivo de metadata no contiene las columnas requeridas para los hosts.")
+        logging.error("The metadata file does not contain required columns for hosts.")
         return host_id_map
 
-    # Agrupar por genus y species, y recopilar todos los environments asociados
+    # Group by genus and species and collect associated environments
     grouped_hosts = metadata_df.groupby(['TAXONOMY_genus', 'TAXONOMY_species'])['Categorized_Environment'].unique().reset_index()
 
     for _, row in grouped_hosts.iterrows():
@@ -211,18 +269,18 @@ def insert_hosts(metadata_df, environment_id_map, db):
         species = ' '.join(species_list[:2])
         host_name = f"{genus} {species}"
 
-        # Obtener los environment_ids únicos para este host
+        # Map environment IDs
         environment_names = row['Categorized_Environment']
         environment_ids = [environment_id_map.get(env) for env in environment_names if environment_id_map.get(env)]
 
         if not environment_ids:
-            logging.warning(f"No se encontraron environment_ids para el host {host_name}. Se omitirá este host.")
+            logging.warning(f"No environment IDs found for host {host_name}. Skipping.")
             continue
 
-        # Verificar si el host ya existe
+        # Check if the host already exists
         existing_host = db.hosts.find_one({'genus': genus, 'species': species})
         if existing_host:
-            # Actualizar el host existente añadiendo nuevos environment_ids
+            # Update the existing host with new environment IDs
             try:
                 result = db.hosts.update_one(
                     {'_id': existing_host['_id']},
@@ -230,11 +288,11 @@ def insert_hosts(metadata_df, environment_id_map, db):
                 )
                 host_id_map[host_name] = existing_host['_id']
                 if result.modified_count > 0:
-                    logging.info(f"Actualizado el host existente: {host_name} con nuevos environment_ids.")
+                    logging.info(f"Updated existing host: {host_name} with new environment IDs.")
             except Exception as e:
-                logging.error(f"Error al actualizar el host {host_name}: {e}")
+                logging.error(f"Error updating host {host_name}: {e}")
         else:
-            # Insertar un nuevo host
+            # Insert a new host
             host_data = {
                 'genus': genus,
                 'species': species,
@@ -243,20 +301,32 @@ def insert_hosts(metadata_df, environment_id_map, db):
             host_data_list.append(host_data)
             host_name_list.append(host_name)
 
-    # Insertar los nuevos hosts
+    # Insert new hosts
     if host_data_list:
         try:
             result = db.hosts.insert_many(host_data_list)
             for idx, inserted_id in enumerate(result.inserted_ids):
                 host_id_map[host_name_list[idx]] = inserted_id
-            logging.info(f"Insertados {len(result.inserted_ids)} nuevos hosts en la base de datos.")
+            logging.info(f"Inserted {len(result.inserted_ids)} new hosts into the database.")
         except Exception as e:
-            logging.error(f"Fallo al insertar nuevos hosts: {e}")
+            logging.error(f"Failed to insert new hosts: {e}")
 
     return host_id_map
 
 
 def insert_plasmids(plasmid_sequences, plasmid_mobility, metadata_df, host_id_map, environment_id_map, db):
+    """
+    Insert plasmid data into the database.
+    Args:
+        plasmid_sequences (dict): Plasmid sequences.
+        plasmid_mobility (dict): Mobility data for plasmids.
+        metadata_df (DataFrame): Metadata DataFrame.
+        host_id_map (dict): Mapping of host names to MongoDB IDs.
+        environment_id_map (dict): Mapping of environment names to MongoDB IDs.
+        db: MongoDB database instance.
+    Returns:
+        dict: Mapping of plasmid IDs to MongoDB IDs.
+    """
     plasmid_data_list = []
     plasmid_id_list = []
     plasmid_id_map = {}
@@ -272,6 +342,7 @@ def insert_plasmids(plasmid_sequences, plasmid_mobility, metadata_df, host_id_ma
 
         plasmid_metadata = metadata_df[metadata_df['NUCCORE_ACC'] == plasmid_id]
         if not plasmid_metadata.empty:
+            # Add environment and host information
             environment_name = plasmid_metadata['Categorized_Environment'].values[0]
             host_genus = plasmid_metadata['TAXONOMY_genus'].values[0]
             species_list = plasmid_metadata['TAXONOMY_species'].values[0].split("_")
@@ -280,7 +351,7 @@ def insert_plasmids(plasmid_sequences, plasmid_mobility, metadata_df, host_id_ma
             plasmid_data['environment_id'] = environment_id_map.get(environment_name)
             plasmid_data['host_id'] = host_id_map.get(host_name)
 
-            # Include assembly information
+            # Include assembly metadata
             plasmid_data['assembly_status'] = plasmid_metadata['ASSEMBLY_Status'].values[0]
             plasmid_data['assembly_accession'] = plasmid_metadata['ASSEMBLY_ACC'].values[0]
         else:
@@ -293,6 +364,7 @@ def insert_plasmids(plasmid_sequences, plasmid_mobility, metadata_df, host_id_ma
         plasmid_data_list.append(plasmid_data)
         plasmid_id_list.append(plasmid_id)
 
+    # Insert plasmid data into the database
     if plasmid_data_list:
         try:
             result = db.plasmids.insert_many(plasmid_data_list)
@@ -305,6 +377,13 @@ def insert_plasmids(plasmid_sequences, plasmid_mobility, metadata_df, host_id_ma
     return plasmid_id_map
 
 def insert_genes(plasmid_genes, plasmid_id_map, db):
+    """
+    Insert gene data into the database.
+    Args:
+        plasmid_genes (dict): Gene data for plasmids.
+        plasmid_id_map (dict): Mapping of plasmid IDs to MongoDB IDs.
+        db: MongoDB database instance.
+    """
     bulk_operations = []
 
     for plasmid_id, genes in plasmid_genes.items():
@@ -329,6 +408,7 @@ def insert_genes(plasmid_genes, plasmid_id_map, db):
             }
             bulk_operations.append(InsertOne(gene_data))
 
+    # Perform bulk write operation for genes
     if bulk_operations:
         try:
             result = db.genes.bulk_write(bulk_operations)
@@ -338,6 +418,9 @@ def insert_genes(plasmid_genes, plasmid_id_map, db):
 
 # Main function
 def main():
+    """
+    Main function to parse input data and populate the MongoDB database.
+    """
     # MongoDB setup
     username, password = 'XXXXXXX', 'XXXXXXX'
     client = MongoClient("mongodb://localhost:XXXXXXX")
