@@ -4,9 +4,11 @@
 **Máster en Bioinformática y Biología Computacional**  
 **Universidad Autónoma de Madrid, 2024-2025**
 
-PlasmID is a hierarchical plasmid database designed to streamline the study of plasmids, antibiotic resistance, and horizontal gene transfer. The project provides a Django-based web interface for querying plasmid data and integrates tools for annotation and natural language queries.
+PlasmID is a hierarchical plasmid database designed to streamline the study of plasmids, antibiotic resistance, and horizontal gene transfer. The project provides a Django-based web interface for querying plasmid data and integrates tools for annotation and natural language queries. 
+Here you can find the base code for the actual version of the database and the model. 
 
 ## Repository Structure
+```
 PlasmID/
 ├── few_shot_examples.json    # JSON file containing examples for LLM queries
 ├── database_build.py        # Script for constructing and populating the database
@@ -31,3 +33,7 @@ PlasmID/
 │   │   ├── urls.py           # URL routing configuration
 │   │   └── wsgi.py           # WSGI configuration
 └── ...
+```
+
+## Contact
+For any doubts or enquiries, feel free to contact me at idequintoc@gmail.com
